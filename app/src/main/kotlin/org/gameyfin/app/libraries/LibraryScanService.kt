@@ -88,6 +88,7 @@ class LibraryScanService(
         private var scanSemaphore = Semaphore(ConfigProperties.Libraries.Scan.MaxConcurrency.default!!)
         private val executor: ExecutorService = Executors.newVirtualThreadPerTaskExecutor()
         private val scansInProgress = ConcurrentHashMap<Long, Boolean>()
+        private val pendingScans = ConcurrentHashMap<Long, ScanType>()
     }
 
     /**
@@ -117,6 +118,7 @@ class LibraryScanService(
 
         libraries.forEach { library ->
             val libraryId = library.id!!
+
             if (scansInProgress.putIfAbsent(libraryId, true) == null) {
                 executor.submit {
                     try {
@@ -127,10 +129,17 @@ class LibraryScanService(
                         }
                     } finally {
                         scansInProgress.remove(libraryId)
+
+                        val pendingScanType = pendingScans.remove(libraryId)
+                        if (pendingScanType != null) {
+                            log.info { "Running queued follow-up scan for library $libraryId." }
+                            triggerScan(pendingScanType, listOf(libraryId))
+                        }
                     }
                 }
             } else {
-                log.info { "Scan already in progress for library $libraryId, skipping." }
+                pendingScans[libraryId] = scanType
+                log.info { "Scan already in progress for library $libraryId, queued follow-up scan." }
             }
         }
     }
