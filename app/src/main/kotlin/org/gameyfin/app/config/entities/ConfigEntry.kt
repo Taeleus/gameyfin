@@ -13,7 +13,7 @@ class ConfigEntry(
     @Column(name = "`key`", unique = true)
     val key: String,
 
-    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @JdbcTypeCode(SqlTypes.LONG32VARCHAR)
     @Column(name = "`value`")
     @Convert(converter = EncryptionConverter::class)
     var value: String

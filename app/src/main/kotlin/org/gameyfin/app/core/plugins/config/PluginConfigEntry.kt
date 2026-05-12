@@ -12,7 +12,7 @@ data class PluginConfigEntry(
     @EmbeddedId
     val id: PluginConfigEntryKey,
 
-    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @JdbcTypeCode(SqlTypes.LONG32VARCHAR)
     @Column(name = "`value`")
     @Convert(converter = EncryptionConverter::class)
     val value: String

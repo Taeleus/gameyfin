@@ -12,7 +12,7 @@ class Image(
     @GeneratedValue(strategy = GenerationType.AUTO)
     var id: Long? = null,
 
-    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @JdbcTypeCode(SqlTypes.LONG32VARCHAR)
     val originalUrl: String? = null,
 
     val type: ImageType,
