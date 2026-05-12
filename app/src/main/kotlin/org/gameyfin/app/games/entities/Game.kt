@@ -45,10 +45,10 @@ class Game(
     @ManyToOne(cascade = [PERSIST, MERGE, REFRESH], fetch = FetchType.EAGER)
     var headerImage: Image? = null,
 
-    @JdbcTypeCode(SqlTypes.LONG_NVARCHAR)
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     var comment: String? = null,
 
-    @JdbcTypeCode(SqlTypes.LONG_NVARCHAR)
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     var summary: String? = null,
 
     var release: Instant? = null,

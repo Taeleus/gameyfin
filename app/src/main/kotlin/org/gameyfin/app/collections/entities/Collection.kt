@@ -26,7 +26,7 @@ class Collection(
     @Column(nullable = false, unique = true)
     var name: String,
 
-    @JdbcTypeCode(SqlTypes.LONG_NVARCHAR)
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     var description: String? = null,
 
     @ManyToMany(fetch = FetchType.EAGER)
