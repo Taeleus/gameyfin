@@ -381,7 +381,22 @@ class LibraryScanService(
             }
         }
 
-        val persistedGames = executor.invokeAll(tasks).mapNotNull { it.get() }
+        val persistedGames = executor
+            .invokeAll(tasks, 10, TimeUnit.MINUTES)
+            .mapNotNull { future ->
+                try {
+                    if (future.isCancelled) {
+                        log.warn { "New game processing task timed out and was cancelled." }
+                        null
+                    } else {
+                        future.get()
+                    }
+                } catch (e: Exception) {
+                    log.warn { "New game processing task failed after completion: ${e.message}" }
+                    log.debug(e) {}
+                    null
+                }
+            }
 
         return MatchNewGamesResult(
             unmatchedPaths = newUnmatchedPaths.toList(),
@@ -460,7 +475,22 @@ class LibraryScanService(
             }
         }
 
-        val updatedGames = executor.invokeAll(updateTasks).mapNotNull { it.get() }
+        val updatedGames = executor
+            .invokeAll(updateTasks, 10, TimeUnit.MINUTES)
+            .mapNotNull { future ->
+                try {
+                    if (future.isCancelled) {
+                        log.warn { "Existing game update task timed out and was cancelled." }
+                        null
+                    } else {
+                        future.get()
+                    }
+                } catch (e: Exception) {
+                    log.warn { "Existing game update task failed after completion: ${e.message}" }
+                    log.debug(e) {}
+                    null
+                }
+            }
         return UpdateExistingGamesResult(updatedGames = updatedGames)
     }
 }
