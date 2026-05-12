@@ -1,6 +1,8 @@
--- Flyway Migration: V2.1.0 (Part 2)
+-- Flyway Migration: V2.1.0.2
 -- Purpose:
 -- 1. Create tables for the game requests feature
+-- PostgreSQL notes: No changes required. TIMESTAMP, VARCHAR, BIGINT, and standard FK
+--   syntax are all valid PostgreSQL. IF NOT EXISTS is supported.
 
 /******************************************************************************************
  * 1. Create new sequence
