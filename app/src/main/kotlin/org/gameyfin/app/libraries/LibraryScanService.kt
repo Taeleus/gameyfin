@@ -122,9 +122,9 @@ class LibraryScanService(
         debounceJobs[libraryId]?.cancel(false)
         debounceJobs[libraryId] = debounceScheduler.schedule({
             startPendingScan(libraryId, scanType)
-        }, 120, TimeUnit.SECONDS)
+        }, 30, TimeUnit.SECONDS)
 
-        log.debug { "Scan for library $libraryId debounced (120s quiet period)." }
+        log.debug { "Scan for library $libraryId debounced (30s quiet period)." }
     }
 
     /**
@@ -157,7 +157,7 @@ class LibraryScanService(
                 if (pendingScans.contains(libraryId)) {
                     debounceJobs[libraryId] = debounceScheduler.schedule({
                         startPendingScan(libraryId, scanType)
-                    }, 120, TimeUnit.SECONDS)
+                    }, 30, TimeUnit.SECONDS)
                 }
             }
         }
@@ -198,7 +198,7 @@ class LibraryScanService(
                             debounceJobs[libraryId]?.cancel(false)
                             debounceJobs[libraryId] = debounceScheduler.schedule({
                                 startPendingScan(libraryId, scanType)
-                            }, 120, TimeUnit.SECONDS)
+                            }, 30, TimeUnit.SECONDS)
                         }
                     }
                 }
