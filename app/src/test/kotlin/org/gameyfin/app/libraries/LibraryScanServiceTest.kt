@@ -115,15 +115,13 @@ class LibraryScanServiceTest {
 
         libraryScanService.triggerScan(ScanType.QUICK, listOf(1L))
         Thread.sleep(50)
-        // Second trigger while first is in progress - should be queued, not run immediately
         libraryScanService.triggerScan(ScanType.QUICK, listOf(1L))
-        // Third trigger - should be silently de-duped (already queued)
         libraryScanService.triggerScan(ScanType.QUICK, listOf(1L))
 
-        // Wait for first scan (150ms) + queued follow-up to complete
-        Thread.sleep(400)
-        // First scan + exactly one queued follow-up = 2 total calls (not 3)
-        verify(exactly = 2) { filesystemService.scanLibraryForGamefiles(library) }
+        // First scan runs immediately (150ms), follow-up is debounced 30s so it won't
+        // fire within this window — verify exactly 1 scan ran, not 2 or 3
+        Thread.sleep(300)
+        verify(exactly = 1) { filesystemService.scanLibraryForGamefiles(library) }
     }
 
     @Test
@@ -139,9 +137,9 @@ class LibraryScanServiceTest {
         libraryScanService.triggerScan(ScanType.QUICK, listOf(1L))
         libraryScanService.triggerScan(ScanType.QUICK, listOf(1L))
 
-        Thread.sleep(400)
+        Thread.sleep(300)
         verify(atLeast = 1) { filesystemService.scanLibraryForGamefiles(library) }
-        verify(atMost = 2) { filesystemService.scanLibraryForGamefiles(library) }
+        verify(atMost = 1) { filesystemService.scanLibraryForGamefiles(library) }
     }
 
     @Test

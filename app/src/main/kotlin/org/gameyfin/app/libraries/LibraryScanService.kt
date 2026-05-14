@@ -122,9 +122,9 @@ class LibraryScanService(
         debounceJobs[libraryId]?.cancel(false)
         debounceJobs[libraryId] = debounceScheduler.schedule({
             startPendingScan(libraryId, scanType)
-        }, 30, TimeUnit.SECONDS)
+        }, 120, TimeUnit.SECONDS)
 
-        log.debug { "Scan for library $libraryId debounced (30s quiet period)." }
+        log.debug { "Scan for library $libraryId debounced (120s quiet period)." }
     }
 
     /**
@@ -157,7 +157,7 @@ class LibraryScanService(
                 if (pendingScans.contains(libraryId)) {
                     debounceJobs[libraryId] = debounceScheduler.schedule({
                         startPendingScan(libraryId, scanType)
-                    }, 30, TimeUnit.SECONDS)
+                    }, 120, TimeUnit.SECONDS)
                 }
             }
         }
@@ -193,10 +193,12 @@ class LibraryScanService(
                     } finally {
                         scansInProgress.remove(libraryId)
 
-                        // If a follow-up was queued while we were running, start it
-                        if (pendingScans.remove(libraryId)) {
-                            log.info { "Running queued follow-up scan for library $libraryId." }
-                            triggerScan(scanType, listOf(libraryId))
+                        if (pendingScans.contains(libraryId)) {
+                            log.info { "Follow-up scan queued for library $libraryId, scheduling after cooldown." }
+                            debounceJobs[libraryId]?.cancel(false)
+                            debounceJobs[libraryId] = debounceScheduler.schedule({
+                                startPendingScan(libraryId, scanType)
+                            }, 120, TimeUnit.SECONDS)
                         }
                     }
                 }
@@ -418,7 +420,20 @@ class LibraryScanService(
             Callable<Game?> {
                 scanSemaphore.acquire()
                 try {
-                    val persisted = libraryGameProcessor.processNewGame(path, library)
+                    val persisted = run {
+                        val startedAt = System.currentTimeMillis()
+                        log.debug { "Processing new game: '${path.fileName}'" }
+                        try {
+                            libraryGameProcessor.processNewGame(path, library)
+                        } finally {
+                            val elapsed = (System.currentTimeMillis() - startedAt) / 1000
+                            if (elapsed > 60) {
+                                log.warn { "Processing new game '${path.fileName}' took ${elapsed}s — possible hang" }
+                            } else {
+                                log.debug { "Finished processing new game '${path.fileName}' in ${elapsed}s" }
+                            }
+                        }
+                    }
 
                     if (persisted == null) {
                         // Not identified, mark as unmatched by all current metadata providers
@@ -537,7 +552,20 @@ class LibraryScanService(
             Callable<Game?> {
                 scanSemaphore.acquire()
                 try {
-                    val updated = libraryGameProcessor.processExistingGame(game)
+                    val updated = run {
+                        val startedAt = System.currentTimeMillis()
+                        log.debug { "Updating existing game: '${game.title}' (id=${game.id})" }
+                        try {
+                            libraryGameProcessor.processExistingGame(game)
+                        } finally {
+                            val elapsed = (System.currentTimeMillis() - startedAt) / 1000
+                            if (elapsed > 60) {
+                                log.warn { "Updating existing game '${game.title}' (id=${game.id}) took ${elapsed}s — possible hang" }
+                            } else {
+                                log.debug { "Finished updating existing game '${game.title}' (id=${game.id}) in ${elapsed}s" }
+                            }
+                        }
+                    }
                     return@Callable updated
                 } catch (e: Exception) {
                     log.error { "Error updating game with id '${game.id}': ${e.message}" }
